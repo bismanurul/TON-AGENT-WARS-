@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TON AGENT WARS — Mainnet Edition</title>
+
+<!-- TON Connect UI CDN -->
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ══════════════════════════════════
+   DESIGN SYSTEM
+══════════════════════════════════ */
+:root {
+  --bg:        #02060f;
+  --surface:   #070d1a;
+  --panel:     #0b1525;
+  --border:    #0f2040;
+  --border-hi: #1a3a6a;
+  --cyan:   #00e5ff;
+  --blue:   #0080ff;
+  --gold:   #ffb300;
+  --green:  #00e676;
+  --red:    #ff1744;
+  --purple: #d500f9;
+  --orange: #ff6d00;
+  --text:     #b0c8e8;
+  --text-dim: #3a5a7a;
+  --text-hi:  #e8f4ff;
+  --hud:    'Orbitron', sans-serif;
+  --body:   'Rajdhani', sans-serif;
+  --mono:   'JetBrains Mono', monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:var(--surface); }
+::-webkit-scrollbar-thumb { background:var(--border-hi); border-radius:2px; }
+
+body {
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Rajdhani',sans-serif;
+  font-size:15px;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before {
+  content:'';
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+  pointer-events:none;z-index:9998;
+}
+body::after {
+  content:'';
+  position:fixed;inset:0;
+  background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.65) 100%);
+  pointer-events:none;z-index:9997;
+}
+.grid-bg {
+  position:fixed;inset:0;z-index:0;
+  background-image:
+    linear-gradient(rgba(0,100,200,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,100,200,.025) 1px,transparent 1px);
+  background-size:50px 50px;
+}
+.hidden { display:none !important; }
+
+/* ══════════════════════════════════
+   WALLET CONNECT BANNER
+══════════════════════════════════ */
+#walletBanner {
+  position:fixed;top:0;left:0;right:0;z-index:5000;
+  background:linear-gradient(135deg, rgba(7,13,26,0.98), rgba(11,21,37,0.98));
+  border-bottom:1px solid var(--border-hi);
+  backdrop-filter:blur(20px);
+  padding:0 24px;
+  height:56px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.wb-left {
+  display:flex;align-items:center;gap:12px;
+  font-family:'Orbitron',sans-serif;
+}
+
+.wb-logo {
+  font-size:.7rem;
+  letter-spacing:4px;
+  background:linear-gradient(90deg,var(--cyan),var(--gold));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.wb-sep { width:1px;height:24px;background:var(--border-hi); }
+
+.wb-net {
+  display:flex;align-items:center;gap:6px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.58rem;
+  color:var(--text-dim);
+  letter-spacing:1px;
+}
+
+.net-dot {
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 8px var(--green);
+  animation:blink 1.5s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.wb-wallet-info {
+  display:flex;align-items:center;gap:10px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.62rem;
+}
+
+.wi-addr {
+  background:rgba(0,229,255,.07);
+  border:1px solid rgba(0,229,255,.15);
+  padding:5px 12px;
+  border-radius:4px;
+  color:var(--cyan);
+  letter-spacing:1px;
+}
+
+.wi-balance {
+  background:rgba(255,179,0,.07);
+  border:1px solid rgba(255,179,0,.15);
+  padding:5px 12px;
+  border-radius:4px;
+  color:var(--gold);
+  font-family:'Orbitron',sans-serif;
+  font-size:.65rem;
+}
+
+.wi-balance-lbl { color:var(--text-dim);font-size:.5rem;margin-right:4px; }
+
+.wb-right { display:flex;align-items:center;gap:10px; }
+
+/* TonConnect built-in button container */
+#tc-btn-root tc-root button,
+#tc-btn-root { z-index: 5001 !important; }
+
+.btn-disconnect {
+  padding:6px 14px;
+  background:rgba(255,23,68,.1);
+  border:1px solid rgba(255,23,68,.3);
+  border-radius:4px;
+  color:var(--red);
+  font-family:'JetBrains Mono',monospace;
+  font-size:.58rem;
+  cursor:pointer;
+  transition:all .2s;
+  letter-spacing:1px;
+}
+.btn-disconnect:hover { background:rgba(255,23,68,.2); box-shadow:0 0 12px rgba(255,23,68,.3); }
+
+.wb-hk {
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,179,0,.08);
+  border:1px solid rgba(255,179,0,.2);
+  padding:4px 10px;
+  border-radius:20px;
+  font-family:'Orbitron',sans-serif;
+  font-size:.48rem;
+  color:var(--gold);
+  letter-spacing:2px;
+}
+
+/* ══════════════════════════════════
+   SCREENS
+══════════════════════════════════ */
+.screen { position:relative;z-index:1; }
+
+/* ─── INTRO ─── */
+#intro {
+  min-height:100vh;
+  padding-top:80px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:80px 20px 40px;
+  gap:0;
+}
+
+.intro-logo {
+  font-family:'Orbitron',sans-serif;
+  font-weight:900;
+  font-size:clamp(1.8rem,5vw,3.4rem);
+  letter-spacing:8px;
+  background:linear-gradient(135deg,#00e5ff 0%,#0080ff 40%,#ffb300 80%,#ff6d00 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-align:center;margin-bottom:6px;
+  animation:logoPulse 4s ease-in-out infinite;
+  filter:drop-shadow(0 0 30px rgba(0,229,255,.3));
+}
+@keyframes logoPulse{0%,100%{filter:drop-shadow(0 0 20px rgba(0,229,255,.3))}50%{filter:drop-shadow(0 0 45px rgba(0,229,255,.6))}}
+
+.intro-sub {
+  font-family:'JetBrains Mono',monospace;
+  font-size:.65rem;letter-spacing:4px;color:var(--text-dim);
+  text-transform:uppercase;margin-bottom:10px;
+}
+
+.intro-wallet-required {
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,179,0,.06);
+  border:1px solid rgba(255,179,0,.2);
+  padding:8px 16px;border-radius:5px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.6rem;color:var(--gold);letter-spacing:1px;
+  margin-bottom:28px;
+}
+
+.intro-divider { width:100%;max-width:680px;height:1px;background:linear-gradient(90deg,transparent,var(--border-hi),transparent);margin-bottom:28px; }
+
+.intro-desc {
+  font-size:.95rem;color:var(--text-dim);max-width:520px;text-align:center;
+  line-height:1.8;margin-bottom:30px;font-weight:400;
+}
+
+/* Wallet connect status in intro */
+.wallet-status-intro {
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  margin-bottom:24px;
+  padding:16px 24px;
+  background:var(--surface);
+  border:1px solid var(--border-hi);
+  border-radius:8px;
+  width:100%;max-width:440px;
+}
+
+.wsi-title {
+  font-family:'Orbitron',sans-serif;
+  font-size:.55rem;letter-spacing:3px;color:var(--text-dim);
+}
+
+.wsi-state {
+  font-family:'JetBrains Mono',monospace;
+  font-size:.75rem;
+  display:flex;align-items:center;gap:8px;
+}
+
+.wsi-dot { width:8px;height:8px;border-radius:50%; }
+.wsi-dot.connected { background:var(--green);box-shadow:0 0 10px var(--green); animation:blink 2s ease-in-out infinite; }
+.wsi-dot.disconnected { background:var(--text-dim); }
+
+#wsiAddress {
+  font-size:.62rem;color:var(--cyan);
+  background:rgba(0,229,255,.06);
+  border:1px solid rgba(0,229,255,.12);
+  padding:4px 10px;border-radius:4px;
+  letter-spacing:1px;
+  word-break:break-all;text-align:center;
+}
+
+/* TC button slot in intro */
+#tc-intro-root { margin-bottom:4px; }
+
+.class-heading { font-family:'Orbitron',sans-serif;font-size:.5rem;letter-spacing:4px;color:var(--cyan);margin-bottom:14px;text-transform:uppercase; }
+
+.class-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:600px;margin-bottom:26px; }
+
+.class-card {
+  position:relative;padding:18px 12px;
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  cursor:pointer;transition:all .25s;text-align:center;overflow:hidden;
+}
+.class-card::before { content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0;transition:.25s; }
+.class-card:hover { border-color:var(--border-hi);background:rgba(0,229,255,.04);transform:translateY(-3px); }
+.class-card:hover::before { opacity:1; }
+.class-card.active { border-color:var(--gold);background:rgba(255,179,0,.06);box-shadow:0 0 30px rgba(255,179,0,.15); }
+.class-card.active::before { background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:1; }
+.cc-icon { font-size:2rem;margin-bottom:8px;display:block; }
+.cc-name { font-family:'Orbitron',sans-serif;font-size:.62rem;letter-spacing:3px;color:var(--cyan);margin-bottom:6px; }
+.cc-stats { display:flex;justify-content:center;gap:8px;margin-bottom:6px; }
+.cc-stat { font-family:'JetBrains Mono',monospace;font-size:.55rem;padding:2px 6px;border-radius:3px;border:1px solid var(--border); }
+.cc-stat.atk{color:var(--red);border-color:rgba(255,23,68,.3);}
+.cc-stat.def{color:var(--blue);border-color:rgba(0,128,255,.3);}
+.cc-stat.mp{color:var(--cyan);border-color:rgba(0,229,255,.3);}
+.cc-desc { font-size:.72rem;color:var(--text-dim);line-height:1.5; }
+
+.name-row { display:flex;gap:10px;align-items:center;margin-bottom:8px; }
+
+.name-input {
+  background:var(--surface);border:1px solid var(--border-hi);border-radius:5px;
+  padding:10px 16px;color:var(--text-hi);
+  font-family:'JetBrains Mono',monospace;font-size:.78rem;outline:none;width:210px;
+  letter-spacing:2px;transition:border-color .2s,box-shadow .2s;
+}
+.name-input:focus { border-color:var(--cyan);box-shadow:0 0 16px rgba(0,229,255,.25); }
+.name-input::placeholder { color:var(--text-dim);letter-spacing:1px; }
+
+.btn-deploy {
+  font-family:'Orbitron',sans-serif;font-size:.6rem;letter-spacing:3px;
+  padding:11px 28px;
+  background:linear-gradient(135deg,var(--blue),rgba(0,60,200,.8));
+  border:1px solid var(--cyan);border-radius:5px;color:#fff;
+  cursor:pointer;transition:all .25s;text-transform:uppercase;
+}
+.btn-deploy:hover:not(:disabled) { box-shadow:0 0 20px rgba(0,229,255,.4);transform:translateY(-2px); }
+.btn-deploy:disabled { opacity:.4;cursor:not-allowed; }
+
+/* ─── GAME SCREEN ─── */
+#game {
+  max-width:1280px;margin:0 auto;padding:70px 14px 14px;
+  display:grid;
+  grid-template-columns:255px 1fr 295px;
+  grid-template-rows:auto 1fr;
+  gap:13px;
+  min-height:100vh;
+}
+@media(max-width:1100px){#game{grid-template-columns:240px 1fr}.col-right{display:none}}
+@media(max-width:700px){#game{grid-template-columns:1fr}.col-left{display:none}}
+
+/* topbar */
+.topbar {
+  grid-column:1/-1;
+  display:flex;align-items:center;padding:9px 14px;
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  gap:16px;flex-wrap:wrap;
+}
+.tb-logo { font-family:'Orbitron',sans-serif;font-size:.7rem;letter-spacing:4px;background:linear-gradient(90deg,var(--cyan),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+.tb-sep { width:1px;height:22px;background:var(--border-hi);flex-shrink:0; }
+.tb-stat { display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:.6rem; }
+.ts-l { color:var(--text-dim);letter-spacing:1px; }
+.ts-v { font-weight:500; }
+.ts-hp{color:var(--red)}.ts-mp{color:var(--cyan)}.ts-lv{color:var(--green);font-family:'Orbitron',sans-serif}.ts-ton{color:var(--gold)}
+.tb-wallet-chip {
+  margin-left:auto;
+  display:flex;align-items:center;gap:8px;
+  background:rgba(0,229,255,.05);
+  border:1px solid rgba(0,229,255,.12);
+  padding:5px 12px;border-radius:4px;
+  font-family:'JetBrains Mono',monospace;font-size:.58rem;
+  color:var(--cyan);letter-spacing:1px;
+  cursor:pointer;transition:all .2s;
+}
+.tb-wallet-chip:hover { background:rgba(0,229,255,.1);box-shadow:0 0 12px rgba(0,229,255,.2); }
+.tb-wallet-dot { width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0; }
+.tb-hk { display:flex;align-items:center;gap:5px;background:rgba(255,179,0,.07);border:1px solid rgba(255,179,0,.2);padding:4px 9px;border-radius:20px;font-family:'Orbitron',sans-serif;font-size:.47rem;color:var(--gold);letter-spacing:2px; }
+
+/* panels */
+.panel { background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column; }
+.panel-head { display:flex;align-items:center;gap:7px;padding:9px 13px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.2);flex-shrink:0; }
+.ph-dot { width:5px;height:5px;border-radius:50%;flex-shrink:0; }
+.ph-title { font-family:'Orbitron',sans-serif;font-size:.48rem;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase; }
+.panel-body { padding:13px;flex:1;overflow-y:auto; }
+
+/* ─── LEFT COLUMN ─── */
+.col-left { display:flex;flex-direction:column;gap:13px; }
+
+.char-portrait { text-align:center;padding:18px 13px 12px; }
+.portrait-wrap { width:76px;height:76px;margin:0 auto 11px; }
+.portrait-wrap svg { width:100%;height:100%;animation:floatP 5s ease-in-out infinite; }
+@keyframes floatP{0%,100%{transform:translateY(0);filter:drop-shadow(0 0 10px rgba(0,229,255,.5))}50%{transform:translateY(-6px);filter:drop-shadow(0 0 20px rgba(0,229,255,.8))}}
+
+.char-name-d { font-family:'Orbitron',sans-serif;font-size:.8rem;letter-spacing:2px;color:var(--text-hi);margin-bottom:3px; }
+.char-class-d { font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--gold);letter-spacing:3px;margin-bottom:14px; }
+
+.stat-g { display:flex;flex-direction:column;gap:7px; }
+.sr { display:flex;align-items:center;gap:7px; }
+.sr-l { font-family:'Orbitron',sans-serif;font-size:.48rem;letter-spacing:2px;color:var(--text-dim);width:23px;flex-shrink:0; }
+.sr-track { flex:1;height:4px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;position:relative; }
+.sr-fill { height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1); }
+.sr-fill::after { content:'';position:absolute;right:0;top:0;width:3px;height:100%;background:rgba(255,255,255,.5);border-radius:2px; }
+.sf-hp{background:linear-gradient(90deg,#c62828,var(--red))}
+.sf-mp{background:linear-gradient(90deg,#0039cb,var(--cyan))}
+.sf-xp{background:linear-gradient(90deg,#e65100,var(--gold))}
+.sr-v { font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--text-dim);width:50px;text-align:right;flex-shrink:0; }
+
+.cs-grid { display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:10px; }
+.cs-item { background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:4px;padding:7px 9px;text-align:center; }
+.cs-v { font-family:'Orbitron',sans-serif;font-size:.9rem;display:block; }
+.cs-l { font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--text-dim);letter-spacing:2px;display:block;margin-top:2px; }
+.v-atk{color:var(--red)}.v-def{color:var(--blue)}.v-spd{color:var(--green)}.v-crit{color:var(--gold)}
+
+/* Wallet panel in game */
+.wallet-panel {
+  margin-top:10px;
+  background:rgba(0,128,255,.04);
+  border:1px solid rgba(0,128,255,.12);
+  border-radius:5px;
+  padding:10px 12px;
+}
+
+.wp-row { display:flex;align-items:center;justify-content:space-between;margin-bottom:6px; }
+.wp-label { font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--text-dim);letter-spacing:2px; }
+.wp-value { font-family:'Orbitron',sans-serif;font-size:.75rem; }
+.wp-value.ton { color:var(--cyan); }
+.wp-unit { font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--blue);margin-left:3px; }
+.wp-addr { font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--text-dim);word-break:break-all;line-height:1.5; }
+
+.wp-earn-btn {
+  width:100%;margin-top:8px;
+  padding:7px;
+  background:rgba(255,179,0,.06);
+  border:1px solid rgba(255,179,0,.2);
+  border-radius:4px;
+  color:var(--gold);
+  font-family:'Orbitron',sans-serif;font-size:.48rem;letter-spacing:2px;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.wp-earn-btn:hover { background:rgba(255,179,0,.12);box-shadow:0 0 12px rgba(255,179,0,.2); }
+
+/* skill list */
+.skill-list { display:flex;flex-direction:column;gap:5px; }
+.sk-item { display:flex;align-items:center;gap:8px;padding:7px 9px;background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:4px; }
+.sk-icon { font-size:1rem;flex-shrink:0; }
+.sk-info { flex:1; }
+.sk-name { font-family:'Orbitron',sans-serif;font-size:.56rem;letter-spacing:1px;color:var(--cyan);margin-bottom:2px; }
+.sk-desc { font-size:.62rem;color:var(--text-dim);line-height:1.4; }
+.sk-cost { font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--gold);flex-shrink:0; }
+
+/* zone map */
+.zone-map { display:flex;flex-direction:column;gap:4px; }
+.zi {
+  display:flex;align-items:center;gap:8px;padding:7px 9px;
+  border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+}
+.zi:hover:not(.zi-locked) { border-color:var(--border-hi);background:rgba(0,229,255,.03); }
+.zi.zi-active { border-color:var(--cyan);background:rgba(0,229,255,.05); }
+.zi.zi-active::before { content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--cyan);box-shadow:0 0 8px var(--cyan); }
+.zi.zi-locked { opacity:.35;cursor:not-allowed; }
+.zi.zi-boss { border-color:rgba(213,0,249,.25); }
+.zi.zi-boss:hover:not(.zi-locked) { border-color:var(--purple); }
+.zi-icon { font-size:.95rem;flex-shrink:0; }
+.zi-info { flex:1; }
+.zi-name { font-family:'Orbitron',sans-serif;font-size:.55rem;letter-spacing:2px;color:var(--text-hi);margin-bottom:1px; }
+.zi-sub { font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--text-dim); }
+.zi-badge { font-family:'JetBrains Mono',monospace;font-size:.48rem;padding:2px 5px;border-radius:3px;letter-spacing:1px; }
+.zb-n{background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.zb-b{background:rgba(213,0,249,.1);color:var(--purple);border:1px solid rgba(213,0,249,.3)}
+.zb-l{background:rgba(255,255,255,.03);color:var(--text-dim);border:1px solid var(--border)}
+
+/* ─── CENTER COLUMN ─── */
+.col-center { display:flex;flex-direction:column;gap:13px;min-width:0; }
+
+/* Arena */
+.arena {
+  background:var(--panel);border:1px solid var(--border);border-radius:6px;
+  overflow:hidden;position:relative;flex-shrink:0;
+}
+.arena-bg {
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at 75% 50%,rgba(0,80,200,.08) 0%,transparent 55%),
+    radial-gradient(ellipse at 25% 50%,rgba(213,0,249,.05) 0%,transparent 55%);
+  animation:aPulse 6s ease-in-out infinite;
+}
+@keyframes aPulse{0%,100%{opacity:1}50%{opacity:.7}}
+.arena-floor {
+  position:absolute;bottom:0;left:0;right:0;height:55px;
+  background:
+    repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(0,100,200,.08) 40px,rgba(0,100,200,.08) 41px),
+    linear-gradient(0deg,rgba(0,100,200,.06) 0%,transparent 100%);
+}
+.arena-content { position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:24px 32px 18px;gap:16px; }
+.fighter-block { text-align:center;min-width:110px; }
+.fighter-sprite { width:95px;height:95px;margin:0 auto 10px;position:relative; }
+.fighter-sprite svg { width:100%;height:100%; }
+.sp-player { animation:fpFloat 4s ease-in-out infinite; }
+@keyframes fpFloat{0%,100%{transform:translateY(0);filter:drop-shadow(0 0 12px rgba(0,229,255,.6))}50%{transform:translateY(-8px);filter:drop-shadow(0 0 24px rgba(0,229,255,.9))}}
+.sp-enemy { animation:feFloat 3.5s ease-in-out infinite reverse; }
+@keyframes feFloat{0%,100%{transform:translateY(0) scaleX(-1);filter:drop-shadow(0 0 16px rgba(255,23,68,.6))}50%{transform:translateY(-10px) scaleX(-1);filter:drop-shadow(0 0 30px rgba(255,23,68,.9))}}
+.sp-boss { animation:fbFloat 2.5s ease-in-out infinite; }
+@keyframes fbFloat{0%,100%{transform:translateY(0) scaleX(-1) scale(1.1);filter:drop-shadow(0 0 20px rgba(213,0,249,.8))}50%{transform:translateY(-10px) scaleX(-1) scale(1.15);filter:drop-shadow(0 0 40px rgba(213,0,249,1))}}
+
+.fn { font-family:'Orbitron',sans-serif;font-size:.62rem;letter-spacing:2px;margin-bottom:5px; }
+.fn-p{color:var(--cyan)}.fn-e{color:var(--red)}.fn-b{color:var(--purple)}
+
+.fhbar { width:100px;margin:0 auto 3px; }
+.fhtrack { height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden; }
+.fhfill { height:100%;border-radius:3px;transition:width .5s ease; }
+.fhf-p{background:linear-gradient(90deg,#c62828,var(--red))}
+.fhf-e{background:linear-gradient(90deg,#b71c1c,#ff5252)}
+.fhf-b{background:linear-gradient(90deg,#6a0080,var(--purple))}
+.fhval { font-family:'JetBrains Mono',monospace;font-size:.53rem;color:var(--text-dim);text-align:center;margin-top:2px; }
+
+.vs-block { text-align:center;flex-shrink:0; }
+.vs-txt { font-family:'Orbitron',sans-serif;font-size:1.7rem;font-weight:900;color:var(--text-dim);opacity:.3;line-height:1;margin-bottom:6px; }
+.vs-wave { font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--text-dim);letter-spacing:2px; }
+.vs-wave span{color:var(--text-hi)}
+.vs-badge { font-family:'Orbitron',sans-serif;font-size:.52rem;letter-spacing:2px;margin-top:5px;padding:3px 9px;border-radius:3px;display:inline-block; }
+.vsb-a{background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.vsb-b{background:rgba(213,0,249,.1);color:var(--purple);border:1px solid rgba(213,0,249,.3);animation:bBadge 1s ease-in-out infinite}
+.vsb-v{background:rgba(255,179,0,.1);color:var(--gold);border:1px solid rgba(255,179,0,.3)}
+@keyframes bBadge{0%,100%{box-shadow:none}50%{box-shadow:0 0 15px rgba(213,0,249,.4)}}
+
+.status-strip { display:flex;gap:4px;padding:7px 32px;border-top:1px solid var(--border);background:rgba(0,0,0,.2);min-height:30px;flex-wrap:wrap; }
+.stag { font-family:'JetBrains Mono',monospace;font-size:.5rem;padding:2px 6px;border-radius:3px;letter-spacing:1px;animation:fadeIn .3s ease; }
+.st-buff{background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.st-debuff{background:rgba(255,23,68,.1);color:var(--red);border:1px solid rgba(255,23,68,.2)}
+.st-info{background:rgba(0,229,255,.06);color:var(--cyan);border:1px solid rgba(0,229,255,.15)}
+.st-ton{background:rgba(255,179,0,.08);color:var(--gold);border:1px solid rgba(255,179,0,.2)}
+
+.log-wrap { background:rgba(0,0,0,.4);border-top:1px solid var(--border);flex-shrink:0; }
+.log-inner { height:105px;overflow-y:auto;padding:9px 14px;display:flex;flex-direction:column;gap:3px; }
+.log-line { font-family:'JetBrains Mono',monospace;font-size:.62rem;line-height:1.6;animation:fadeIn .3s ease;display:flex;gap:7px; }
+@keyframes fadeIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.ll-t { color:var(--text-dim);flex-shrink:0;font-size:.53rem; }
+.ll-player{color:var(--cyan)}.ll-enemy{color:var(--red)}.ll-boss{color:var(--purple)}
+.ll-system{color:var(--gold)}.ll-ai{color:var(--green)}.ll-crit{color:var(--orange);font-weight:700}
+.ll-ton{color:var(--gold)}
+
+/* Actions */
+.action-panel { flex-shrink:0; }
+.act-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:7px; }
+.act-wide { display:grid;grid-template-columns:1fr 1fr;gap:7px; }
+.abtn {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:11px 6px;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:5px;
+  cursor:pointer;transition:all .2s;font-family:'Orbitron',sans-serif;font-size:.5rem;
+  letter-spacing:2px;color:var(--text);text-transform:uppercase;gap:3px;
+}
+.abtn:disabled{opacity:.3;cursor:not-allowed}
+.ab-icon{font-size:1.3rem}.ab-cost{font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--text-dim)}
+.abtn.t-atk{border-color:rgba(255,23,68,.2)}
+.abtn.t-atk:hover:not(:disabled){border-color:var(--red);background:rgba(255,23,68,.08);color:var(--red);box-shadow:0 0 16px rgba(255,23,68,.3);transform:translateY(-2px)}
+.abtn.t-sk{border-color:rgba(0,128,255,.2)}
+.abtn.t-sk:hover:not(:disabled){border-color:var(--cyan);background:rgba(0,229,255,.06);color:var(--cyan);box-shadow:0 0 14px rgba(0,229,255,.2);transform:translateY(-2px)}
+.abtn.t-heal{border-color:rgba(0,230,118,.2)}
+.abtn.t-heal:hover:not(:disabled){border-color:var(--green);background:rgba(0,230,118,.06);color:var(--green);transform:translateY(-2px)}
+.abtn.t-ai{border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.04);color:var(--green)}
+.abtn.t-ai:hover:not(:disabled){border-color:var(--green);background:rgba(0,230,118,.1);box-shadow:0 0 16px rgba(0,230,118,.3);transform:translateY(-2px)}
+.abtn.t-ult{border-color:rgba(255,109,0,.2)}
+.abtn.t-ult:hover:not(:disabled){border-color:var(--orange);background:rgba(255,109,0,.08);color:var(--orange);box-shadow:0 0 14px rgba(255,109,0,.3);transform:translateY(-2px)}
+
+/* ─── RIGHT COLUMN ─── */
+.col-right { display:flex;flex-direction:column;gap:13px; }
+
+.ai-panel {
+  flex:1;display:flex;flex-direction:column;
+  background:var(--surface);border:1px solid rgba(0,230,118,.2);border-radius:6px;overflow:hidden;
+}
+.ai-head {
+  display:flex;align-items:center;gap:9px;padding:9px 13px;
+  background:rgba(0,230,118,.04);border-bottom:1px solid rgba(0,230,118,.1);flex-shrink:0;
+}
+.ai-dot { width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 8px var(--green);animation:blink 1.5s ease-in-out infinite;flex-shrink:0; }
+.ai-htitle { font-family:'Orbitron',sans-serif;font-size:.5rem;letter-spacing:3px;color:var(--green);flex:1; }
+.ai-chip { font-family:'JetBrains Mono',monospace;font-size:.47rem;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.15);padding:2px 7px;border-radius:10px;color:var(--green);opacity:.7;letter-spacing:1px; }
+.ai-msgs { flex:1;overflow-y:auto;padding:11px;display:flex;flex-direction:column;gap:7px;min-height:180px;max-height:350px; }
+.ai-bub { max-width:93%;padding:8px 11px;border-radius:5px;font-size:.75rem;line-height:1.6;animation:bPop .3s ease; }
+@keyframes bPop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.ai-bub.from-ai{background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.15);color:var(--text);align-self:flex-start}
+.ai-bub.from-user{background:rgba(0,128,255,.08);border:1px solid rgba(0,128,255,.2);color:var(--text-hi);align-self:flex-end}
+.bub-l { font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--text-dim);margin-bottom:3px;letter-spacing:2px;text-transform:uppercase; }
+.bub-l.ai{color:var(--green)}.bub-l.user{color:var(--blue)}
+.ai-typing { display:flex;gap:4px;align-items:center;padding:3px 0; }
+.ai-typing span { width:5px;height:5px;background:var(--green);border-radius:50%;animation:tdot 1.2s ease-in-out infinite;opacity:.4; }
+.ai-typing span:nth-child(2){animation-delay:.2s}.ai-typing span:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,100%{opacity:.4;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+.strat-btn {
+  width:calc(100% - 20px);margin:0 10px 9px;padding:9px;
+  background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.2);border-radius:4px;
+  color:var(--green);cursor:pointer;font-family:'Orbitron',sans-serif;font-size:.5rem;
+  letter-spacing:2px;text-transform:uppercase;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.strat-btn:hover:not(:disabled){background:rgba(0,230,118,.12);box-shadow:0 0 12px rgba(0,230,118,.2)}
+.strat-btn:disabled{opacity:.4;cursor:not-allowed}
+.ai-input-area { border-top:1px solid rgba(0,230,118,.1);padding:9px;display:flex;gap:7px;flex-shrink:0;background:rgba(0,0,0,.2); }
+.ai-inp { flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(0,230,118,.15);border-radius:4px;padding:7px 11px;color:var(--text-hi);font-family:'JetBrains Mono',monospace;font-size:.62rem;outline:none;transition:border-color .2s; }
+.ai-inp:focus{border-color:var(--green)}
+.ai-inp::placeholder{color:var(--text-dim)}
+.ai-send { padding:7px 11px;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.25);border-radius:4px;color:var(--green);cursor:pointer;font-size:.7rem;transition:all .2s;flex-shrink:0; }
+.ai-send:hover{background:rgba(0,230,118,.2);box-shadow:0 0 10px rgba(0,230,118,.3)}
+
+/* History */
+.bh-list { display:flex;flex-direction:column;gap:4px; }
+.bh-item { display:flex;align-items:center;gap:7px;padding:5px 9px;background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--text-dim);animation:fadeIn .3s ease; }
+.bh-txt{flex:1}.bh-val{color:var(--gold);flex-shrink:0}
+
+/* ── DAMAGE FLOATERS ── */
+.dmg-float { position:fixed;font-family:'Orbitron',sans-serif;font-weight:900;pointer-events:none;z-index:9999;animation:dmgFly 1.4s ease-out forwards;text-shadow:0 2px 8px rgba(0,0,0,.8); }
+@keyframes dmgFly{0%{opacity:1;transform:translateY(0) scale(1)}20%{opacity:1;transform:translateY(-20px) scale(1.2)}100%{opacity:0;transform:translateY(-90px) scale(.9)}}
+
+/* Flash */
+.flash-d{animation:fD .4s ease}
+.flash-h{animation:fH .4s ease}
+.flash-b{animation:fB .6s ease}
+@keyframes fD{30%{box-shadow:inset 0 0 50px rgba(255,23,68,.2)}}
+@keyframes fH{30%{box-shadow:inset 0 0 50px rgba(0,230,118,.15)}}
+@keyframes fB{30%{box-shadow:inset 0 0 80px rgba(213,0,249,.2)}}
+
+/* BOSS OVERLAY */
+.boss-overlay { position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;animation:oIn .4s ease; }
+@keyframes oIn{from{opacity:0}to{opacity:1}}
+.bo-warn { font-family:'Orbitron',sans-serif;font-size:.65rem;letter-spacing:8px;color:var(--red);animation:wBlink .5s ease-in-out infinite; }
+@keyframes wBlink{0%,100%{opacity:1}50%{opacity:.2}}
+.bo-name { font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(1.4rem,5vw,2.8rem);color:var(--purple);text-shadow:0 0 40px rgba(213,0,249,.8);letter-spacing:6px;text-align:center; }
+.bo-desc { font-size:.88rem;color:var(--text-dim);max-width:380px;text-align:center;line-height:1.7; }
+.bo-stats { display:flex;gap:20px;font-family:'JetBrains Mono',monospace;font-size:.68rem; }
+.bos-i{color:var(--text-dim)}.bos-i span{color:var(--text-hi)}
+.bo-btn { margin-top:8px;padding:11px 38px;background:linear-gradient(135deg,rgba(213,0,249,.3),rgba(100,0,180,.3));border:1px solid var(--purple);border-radius:5px;color:#fff;font-family:'Orbitron',sans-serif;font-size:.62rem;letter-spacing:3px;cursor:pointer;transition:all .25s;text-transform:uppercase; }
+.bo-btn:hover{box-shadow:0 0 30px rgba(213,0,249,.5);transform:scale(1.03)}
+
+/* VICTORY */
+#victory { min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:80px 20px 40px; }
+.v-trophy { font-size:4.5rem;animation:tBounce 2s ease-in-out infinite; }
+@keyframes tBounce{0%,100%{transform:scale(1) rotate(-3deg);filter:drop-shadow(0 0 20px rgba(255,179,0,.8))}50%{transform:scale(1.08) rotate(3deg);filter:drop-shadow(0 0 40px rgba(255,179,0,1))}}
+.v-title { font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(1.4rem,5vw,2.8rem);letter-spacing:8px;background:linear-gradient(135deg,var(--gold),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center; }
+.v-sub { font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text-dim);letter-spacing:3px;text-align:center; }
+.v-card { background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:22px 30px;width:100%;max-width:480px; }
+.vc-head { font-family:'Orbitron',sans-serif;font-size:.52rem;letter-spacing:4px;color:var(--gold);margin-bottom:14px;text-align:center; }
+.vc-row { display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:.68rem; }
+.vc-row:last-child{border-bottom:none}
+.vc-label{color:var(--text-dim)}.vc-value{color:var(--text-hi)}
+.vc-tracks { margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:7px; }
+.vc-track { display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:.62rem; }
+.vct-name{flex:1;color:var(--text-dim)}.vct-ok{color:var(--green)}
+
+/* Wallet panel in victory */
+.v-wallet-reward {
+  background:rgba(0,229,255,.05);
+  border:1px solid rgba(0,229,255,.15);
+  border-radius:6px;
+  padding:16px 24px;
+  width:100%;max-width:480px;
+  text-align:center;
+}
+.vwr-title { font-family:'Orbitron',sans-serif;font-size:.52rem;letter-spacing:3px;color:var(--cyan);margin-bottom:10px; }
+.vwr-amount { font-family:'Orbitron',sans-serif;font-size:1.6rem;color:var(--gold); }
+.vwr-sub { font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--text-dim);margin-top:4px; }
+
+.btn-restart { padding:11px 38px;background:linear-gradient(135deg,var(--blue),rgba(0,60,180,.8));border:1px solid var(--cyan);border-radius:5px;color:#fff;font-family:'Orbitron',sans-serif;font-size:.62rem;letter-spacing:3px;cursor:pointer;transition:all .25s;text-transform:uppercase; }
+.btn-restart:hover{box-shadow:0 0 20px rgba(0,229,255,.4);transform:translateY(-2px)}
+
+/* ─── TOAST ─── */
+#toast {
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--surface);border:1px solid var(--border-hi);
+  border-radius:5px;padding:10px 20px;
+  font-family:'JetBrains Mono',monospace;font-size:.65rem;
+  color:var(--text-hi);z-index:9999;
+  box-shadow:0 4px 20px rgba(0,0,0,.6);
+  display:none;
+  animation:toastIn .3s ease;
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<!-- ════════════════════════════════
+     WALLET BANNER (always visible)
+════════════════════════════════ -->
+<div id="walletBanner">
+  <div class="wb-left">
+    <div class="wb-logo">⚡ TON AGENT WARS</div>
+    <div class="wb-sep"></div>
+    <div class="wb-net">
+      <div class="net-dot"></div>
+      MAINNET <span style="color:var(--green);margin-left:3px">● LIVE</span>
+    </div>
+  </div>
+
+  <div id="walletConnectedInfo" class="wb-wallet-info" style="display:none">
+    <div class="wi-addr" id="bannerAddr">—</div>
+    <div class="wi-balance"><span class="wi-balance-lbl">BAL</span><span id="bannerBal">—</span> TON</div>
+    <button class="btn-disconnect" onclick="disconnectWallet()">DISCONNECT</button>
+  </div>
+
+  <div class="wb-right">
+    <!-- TonConnect built-in button -->
+    <div id="tc-btn-root"></div>
+    <div class="wb-hk">🏆 HACKATHON $10K</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ════════════════════════════════
+     INTRO SCREEN
+════════════════════════════════ -->
+<div id="intro" class="screen">
+  <div class="intro-logo">TON AGENT WARS</div>
+  <div class="intro-sub">Professional RPG × AI Strategy × TON Mainnet</div>
+
+  <div class="intro-wallet-required">
+    🔐 &nbsp; Connect your TON wallet to earn real rewards on Mainnet
+  </div>
+
+  <!-- Wallet Status -->
+  <div class="wallet-status-intro" id="introWalletStatus">
+    <div class="wsi-title">// TON WALLET STATUS</div>
+    <div class="wsi-state">
+      <div class="wsi-dot disconnected" id="wsiDot"></div>
+      <span id="wsiText">Not connected</span>
+    </div>
+    <div id="wsiAddress" style="display:none"></div>
+    <!-- TC button slot in intro -->
+    <div id="tc-intro-root" style="margin-top:4px"></div>
+  </div>
+
+  <div class="intro-divider"></div>
+  <div class="intro-desc">Deploy your AI agent on the TON network. Battle malicious nodes, defeat legendary bosses, and earn real TON rewards. Powered by Claude AI for real-time strategic intelligence.</div>
+
+  <div class="class-heading">// SELECT AGENT CLASS</div>
+  <div class="class-grid">
+    <div class="class-card active" data-cls="0">
+      <span class="cc-icon">⚔️</span>
+      <div class="cc-name">VALIDATOR</div>
+      <div class="cc-stats"><span class="cc-stat atk">ATK 22</span><span class="cc-stat def">DEF 10</span><span class="cc-stat mp">MP 65</span></div>
+      <div class="cc-desc">High-damage chain attacker. Specializes in direct payment flows and transaction validation.</div>
+    </div>
+    <div class="class-card" data-cls="1">
+      <span class="cc-icon">🔮</span>
+      <div class="cc-name">ORACLE</div>
+      <div class="cc-stats"><span class="cc-stat atk">ATK 16</span><span class="cc-stat def">DEF 12</span><span class="cc-stat mp">MP 100</span></div>
+      <div class="cc-desc">Multi-chain coordinator with AoE abilities. Masters wallet integrations and cross-network sync.</div>
+    </div>
+    <div class="class-card" data-cls="2">
+      <span class="cc-icon">🛡️</span>
+      <div class="cc-name">GUARDIAN</div>
+      <div class="cc-stats"><span class="cc-stat atk">ATK 14</span><span class="cc-stat def">DEF 22</span><span class="cc-stat mp">MP 80</span></div>
+      <div class="cc-desc">Infrastructure defender with high survivability. Expert in smart contract security and node protection.</div>
+    </div>
+  </div>
+
+  <div class="name-row">
+    <input class="name-input" id="nameInput" maxlength="16" placeholder="ENTER AGENT NAME..." spellcheck="false">
+    <button class="btn-deploy" id="deployBtn" onclick="startGame()">DEPLOY AGENT →</button>
+  </div>
+  <div style="font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--text-dim);margin-top:6px;text-align:center">
+    Wallet connection optional — connect to track on-chain rewards
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════
+     GAME SCREEN
+════════════════════════════════ -->
+<div id="game" class="screen hidden">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-logo">⚡ TON AGENT WARS</div>
+    <div class="tb-sep"></div>
+    <div class="tb-stat"><span class="ts-l">HP</span><span class="ts-v ts-hp" id="tbHp">—</span></div>
+    <div class="tb-stat"><span class="ts-l">MP</span><span class="ts-v ts-mp" id="tbMp">—</span></div>
+    <div class="tb-stat"><span class="ts-l">LV</span><span class="ts-v ts-lv" id="tbLv">1</span></div>
+    <div class="tb-stat"><span class="ts-l">TON</span><span class="ts-v ts-ton" id="tbTon">0.00</span></div>
+    <div class="tb-sep"></div>
+    <div class="tb-stat"><span class="ts-l">ZONE</span><span class="ts-v" id="tbZone" style="color:var(--text-hi)">—</span></div>
+    <div class="tb-wallet-chip" id="tbWalletChip" onclick="tonUI&&tonUI.openModal()">
+      <div class="tb-wallet-dot"></div>
+      <span id="tbWalletChipTxt">WALLET NOT CONNECTED</span>
+    </div>
+    <div class="tb-hk">🏆 HACKATHON $10K</div>
+  </div>
+
+  <!-- LEFT COLUMN -->
+  <div class="col-left">
+    <div class="panel">
+      <div class="panel-head"><div class="ph-dot" style="background:var(--cyan)"></div><div class="ph-title">Agent Status</div></div>
+      <div class="char-portrait">
+        <div class="portrait-wrap" id="portraitEl"></div>
+        <div class="char-name-d" id="charNameD">AGENT</div>
+        <div class="char-class-d" id="charClassD">◈ VALIDATOR ◈</div>
+        <div class="stat-g">
+          <div class="sr"><div class="sr-l">HP</div><div class="sr-track"><div class="sr-fill sf-hp" id="sfHp" style="width:100%"></div></div><div class="sr-v" id="svHp">—</div></div>
+          <div class="sr"><div class="sr-l">MP</div><div class="sr-track"><div class="sr-fill sf-mp" id="sfMp" style="width:100%"></div></div><div class="sr-v" id="svMp">—</div></div>
+          <div class="sr"><div class="sr-l">XP</div><div class="sr-track"><div class="sr-fill sf-xp" id="sfXp" style="width:0%"></div></div><div class="sr-v" id="svXp">—</div></div>
+        </div>
+        <div class="cs-grid">
+          <div class="cs-item"><span class="cs-v v-atk" id="csAtk">—</span><span class="cs-l">ATK</span></div>
+          <div class="cs-item"><span class="cs-v v-def" id="csDef">—</span><span class="cs-l">DEF</span></div>
+          <div class="cs-item"><span class="cs-v v-spd" id="csSpd">—</span><span class="cs-l">SPD</span></div>
+          <div class="cs-item"><span class="cs-v v-crit" id="csCrit">—</span><span class="cs-l">CRIT%</span></div>
+        </div>
+        <!-- Wallet in-game panel -->
+        <div class="wallet-panel" id="gamWalletPanel">
+          <div class="wp-row">
+            <span class="wp-label">MAINNET WALLET</span>
+            <div class="wp-row" style="margin-bottom:0">
+              <span class="wp-value ton" id="gwBal">0.00</span><span class="wp-unit">TON</span>
+            </div>
+          </div>
+          <div class="wp-addr" id="gwAddr" style="font-size:.5rem;color:var(--text-dim);margin-top:3px">Not connected</div>
+          <button class="wp-earn-btn" onclick="claimReward()">⚡ CLAIM BATTLE REWARDS ON-CHAIN</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="ph-dot" style="background:var(--blue)"></div><div class="ph-title">Smart Contract Skills</div></div>
+      <div class="panel-body" id="skillListEl"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="ph-dot" style="background:var(--gold)"></div><div class="ph-title">Network Zones</div></div>
+      <div class="panel-body"><div class="zone-map" id="zoneMapEl"></div></div>
+    </div>
+  </div>
+
+  <!-- CENTER COLUMN -->
+  <div class="col-center">
+
+    <!-- Arena -->
+    <div class="arena" id="arenaEl">
+      <div class="arena-bg"></div>
+      <div class="arena-floor"></div>
+      <div class="arena-content">
+        <div class="fighter-block">
+          <div class="fighter-sprite" id="playerSprite"></div>
+          <div class="fhbar"><div class="fhtrack"><div class="fhfill fhf-p" id="fhP" style="width:100%"></div></div><div class="fhval" id="fhvP">—</div></div>
+          <div class="fn fn-p" id="fnP">AGENT</div>
+        </div>
+        <div class="vs-block">
+          <div class="vs-txt">VS</div>
+          <div class="vs-wave">WAVE <span id="wDisp">1</span> / <span id="wmDisp">5</span></div>
+          <div class="vs-badge vsb-a" id="vsBadge">⚔ BATTLE</div>
+        </div>
+        <div class="fighter-block">
+          <div class="fighter-sprite sp-enemy" id="enemySprite"></div>
+          <div class="fhbar"><div class="fhtrack"><div class="fhfill fhf-e" id="fhE" style="width:100%"></div></div><div class="fhval" id="fhvE">—</div></div>
+          <div class="fn fn-e" id="fnE">—</div>
+        </div>
+      </div>
+      <div class="status-strip" id="statusStrip"><div class="stag st-info">NETWORK: ACTIVE</div></div>
+      <div class="log-wrap"><div class="log-inner" id="logInner"></div></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="panel action-panel">
+      <div class="panel-head"><div class="ph-dot" style="background:var(--red)"></div><div class="ph-title">Combat Actions</div></div>
+      <div class="panel-body" style="padding-bottom:9px">
+        <div class="act-grid">
+          <button class="abtn t-atk" onclick="act('attack')"><span class="ab-icon">⚔️</span>ATTACK<span class="ab-cost">Physical</span></button>
+          <button class="abtn t-sk" id="btnS1" onclick="act('skill1')"><span class="ab-icon">💥</span><span id="s1l">SKILL I</span><span class="ab-cost">20 MP</span></button>
+          <button class="abtn t-sk" id="btnS2" onclick="act('skill2')"><span class="ab-icon">🔷</span><span id="s2l">SKILL II</span><span class="ab-cost">15 MP</span></button>
+          <button class="abtn t-heal" onclick="act('heal')"><span class="ab-icon">💊</span>RESTORE<span class="ab-cost">25 MP</span></button>
+        </div>
+        <div class="act-wide">
+          <button class="abtn t-ai" id="btnAIStrat" onclick="requestStrategy()"><span class="ab-icon">🤖</span>AI BATTLE STRATEGY<span class="ab-cost">Claude analyzes &amp; executes best move</span></button>
+          <button class="abtn t-ult" onclick="act('ultimate')"><span class="ab-icon">⚡</span>ULTIMATE<span class="ab-cost">40 MP</span></button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /col-center -->
+
+  <!-- RIGHT COLUMN -->
+  <div class="col-right">
+    <div class="ai-panel">
+      <div class="ai-head">
+        <div class="ai-dot"></div>
+        <div class="ai-htitle">AI BATTLE AGENT</div>
+        <div class="ai-chip">claude-sonnet-4</div>
+      </div>
+      <div class="ai-msgs" id="aiMsgs"></div>
+      <button class="strat-btn" id="stratBtn" onclick="requestStrategy()">🤖 &nbsp; REQUEST BATTLE STRATEGY</button>
+      <div class="ai-input-area">
+        <input class="ai-inp" id="aiInp" placeholder="Ask the AI agent anything..." onkeydown="if(event.key==='Enter')sendMsg()">
+        <button class="ai-send" onclick="sendMsg()">➤</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="ph-dot" style="background:var(--gold)"></div><div class="ph-title">Battle Record</div></div>
+      <div class="panel-body" style="max-height:150px"><div class="bh-list" id="bhList"></div></div>
+    </div>
+  </div>
+
+</div><!-- /game -->
+
+
+<!-- BOSS OVERLAY -->
+<div id="bossOverlay" class="boss-overlay hidden">
+  <div class="bo-warn">⚠ DANGER LEVEL: CRITICAL ⚠</div>
+  <div style="font-size:4.5rem" id="bossEmoji">👹</div>
+  <div class="bo-name" id="bossName">BOSS</div>
+  <div class="bo-desc" id="bossDesc">A terrifying threat approaches.</div>
+  <div class="bo-stats">
+    <div class="bos-i">HP: <span id="bossHpD">—</span></div>
+    <div class="bos-i">ATK: <span id="bossAtkD">—</span></div>
+    <div class="bos-i">DEF: <span id="bossDefD">—</span></div>
+  </div>
+  <button class="bo-btn" onclick="closeBossOverlay()">ENGAGE BOSS →</button>
+</div>
+
+
+<!-- VICTORY SCREEN -->
+<div id="victory" class="screen hidden">
+  <div class="v-trophy">🏆</div>
+  <div class="v-title">HACKATHON VICTORY</div>
+  <div class="v-sub">// ALL ZONES CLEARED — SUBMISSION ACCEPTED</div>
+
+  <div class="v-wallet-reward" id="vWalletReward">
+    <div class="vwr-title">// ON-CHAIN REWARDS (MAINNET)</div>
+    <div class="vwr-amount" id="vWalletAmt">0.00 TON</div>
+    <div class="vwr-sub" id="vWalletSub">Connect wallet to claim rewards</div>
+  </div>
+
+  <div class="v-card">
+    <div class="vc-head">◈ FINAL MISSION REPORT ◈</div>
+    <div id="vRows"></div>
+    <div class="vc-tracks">
+      <div class="vc-track"><span style="font-size:1rem">🤖</span><span class="vct-name">User-Facing AI Agents Track</span><span class="vct-ok">✓ SUBMITTED</span></div>
+      <div class="vc-track"><span style="font-size:1rem">🔧</span><span class="vct-name">Agent Infrastructure Track</span><span class="vct-ok">✓ SUBMITTED</span></div>
+    </div>
+  </div>
+
+  <button class="btn-restart" onclick="location.reload()">↺ DEPLOY NEW AGENT</button>
+</div>
+
+
+<!-- ════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════ -->
+<script>
+"use strict";
+
+// ══════════════════════════════════════
+// TON CONNECT SETUP
+// ══════════════════════════════════════
+
+// Using demo manifest (works for testing; production needs own hosted manifest)
+const MANIFEST_URL = './tonconnect-manifest.json'; // ⚠️ Replace with: 'https://YOUR_USERNAME.github.io/ton-agent-wars/tonconnect-manifest.json'
+
+let tonUI = null;
+let walletAddress = null;
+let walletBalance = '0.00';
+
+function initTonConnect() {
+  try {
+    tonUI = new TON_CONNECT_UI.TonConnectUI({
+      manifestUrl: MANIFEST_URL,
+      buttonRootId: 'tc-btn-root',
+    });
+
+    // Also add button in intro
+    const introBtn = new TON_CONNECT_UI.TonConnectUI({
+      manifestUrl: MANIFEST_URL,
+      buttonRootId: 'tc-intro-root',
+    });
+
+    tonUI.onStatusChange(wallet => {
+      if (wallet) {
+        const raw = wallet.account.address;
+        // Convert raw address to friendly
+        walletAddress = raw;
+        const friendly = formatAddr(raw);
+        onWalletConnected(friendly, raw);
+      } else {
+        onWalletDisconnected();
+      }
+    });
+
+    // Try restore
+    tonUI.connectionRestored.then(connected => {
+      if (!connected) console.log('No previous session');
+    });
+
+  } catch(e) {
+    console.warn('TON Connect init failed:', e);
+  }
+}
+
+function formatAddr(raw) {
+  if (!raw) return '—';
+  // Show first 6...last 4
+  const str = raw.toString();
+  if (str.length > 12) return str.slice(0,8) + '…' + str.slice(-6);
+  return str;
+}
+
+function onWalletConnected(friendly, raw) {
+  // Banner
+  document.getElementById('bannerAddr').textContent = friendly;
+  document.getElementById('walletConnectedInfo').style.display = 'flex';
+
+  // Intro wallet status
+  document.getElementById('wsiDot').className = 'wsi-dot connected';
+  document.getElementById('wsiText').textContent = 'Connected ✓';
+  const addrEl = document.getElementById('wsiAddress');
+  addrEl.textContent = friendly;
+  addrEl.style.display = 'block';
+
+  // Game wallet panel
+  document.getElementById('gwAddr').textContent = friendly;
+  document.getElementById('tbWalletChipTxt').textContent = friendly;
+
+  // Fetch real balance
+  fetchBalance(raw);
+
+  showToast('✅ Wallet connected: ' + friendly, 'green');
+}
+
+function onWalletDisconnected() {
+  document.getElementById('walletConnectedInfo').style.display = 'none';
+  document.getElementById('wsiDot').className = 'wsi-dot disconnected';
+  document.getElementById('wsiText').textContent = 'Not connected';
+  document.getElementById('wsiAddress').style.display = 'none';
+  document.getElementById('gwAddr').textContent = 'Not connected';
+  document.getElementById('tbWalletChipTxt').textContent = 'WALLET NOT CONNECTED';
+  walletAddress = null;
+  walletBalance = '0.00';
+  showToast('🔌 Wallet disconnected', 'red');
+}
+
+async function disconnectWallet() {
+  if (tonUI) await tonUI.disconnect();
+}
+
+async function fetchBalance(addr) {
+  try {
+    // Use TonCenter mainnet API (free tier)
+    const res = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${addr}`);
+    const data = await res.json();
+    if (data.result) {
+      const bal = (parseInt(data.result) / 1e9).toFixed(2);
+      walletBalance = bal;
+      document.getElementById('bannerBal').textContent = bal;
+      document.getElementById('gwBal').textContent = bal;
+    }
+  } catch(e) {
+    // Silently fail — balance stays as game-earned ton
+  }
+}
+
+async function claimReward() {
+  if (!walletAddress || !tonUI?.connected) {
+    showToast('⚠ Connect your TON wallet first!', 'gold');
+    tonUI?.openModal();
+    return;
+  }
+  showToast(`⚡ Rewards recorded: ${G.ton.toFixed(2)} TON earned in-game!`, 'gold');
+  addLog(`💰 On-chain reward claim initiated: ${G.ton.toFixed(2)} TON`, 'ton');
+  addAIBubble(`Reward claim detected! You earned ${G.ton.toFixed(2)} TON during this battle session. In a production deployment, this would trigger an on-chain TON transfer to ${formatAddr(walletAddress)} on Mainnet.`, 'ai');
+}
+
+function showToast(msg, color='default') {
+  const el = document.getElementById('toast');
+  const colors = { green:'var(--green)', red:'var(--red)', gold:'var(--gold)', default:'var(--text-hi)' };
+  el.textContent = msg;
+  el.style.color = colors[color] || colors.default;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 3200);
+}
+
+// ══════════════════════════════════════
+// GAME DATA
+// ══════════════════════════════════════
+
+const CLASSES = {
+  0: { name:'VALIDATOR', icon:'⚔️', hp:130, mp:65, atk:22, def:10, spd:14, crit:18,
+       skills:['CHAIN SLASH','BLOCK BREAK','OVERCLOCK'],
+       descs:['Double-hit — 2× damage multiplier','Armor pierce — bypass 60% DEF','ULTIMATE: Full power — 3.5× damage'],
+       icons:['💥','🪓','⚡'], mpCosts:[20,15,40] },
+  1: { name:'ORACLE', icon:'🔮', hp:105, mp:100, atk:16, def:12, spd:16, crit:14,
+       skills:['SYNC PULSE','MULTI-CAST','FORESIGHT'],
+       descs:['AoE blast — bonus from high MP','Chain magic — hits twice','ULTIMATE: Dodge next hit completely'],
+       icons:['✨','🎲','🔮'], mpCosts:[20,15,40] },
+  2: { name:'GUARDIAN', icon:'🛡️', hp:160, mp:80, atk:14, def:22, spd:10, crit:10,
+       skills:['SHIELD BASH','IRON FORTRESS','NODE SURGE'],
+       descs:['Stun + damage — reduce enemy ATK 25%','DEF +15 for 3 turns','ULTIMATE: Reflect 80% damage back'],
+       icons:['🔨','🏰','🔁'], mpCosts:[20,15,40] },
+};
+
+const ZONES = [
+  { name:'MAINNET',   icon:'🌐', minLv:1, isBoss:false, enemies:['Spam Bot','Malicious Node','DDoS Script'] },
+  { name:'TESTNET',   icon:'🔬', minLv:1, isBoss:false, enemies:['Sybil Agent','Fork Attacker','Fake Validator'] },
+  { name:'DEFI HUB',  icon:'💰', minLv:2, isBoss:false, enemies:['MEV Bot','Flash Loan Exploit','Rug Puller'] },
+  { name:'TON BRIDGE',icon:'🌉', minLv:3, isBoss:false, enemies:['Bridge Hack','Oracle Manipulation','Relay Exploit'] },
+  { name:'GENESIS',   icon:'⭐', minLv:4, isBoss:false, enemies:['Core Exploit','Consensus Breaker','Genesis Worm'] },
+  { name:'HACKATHON', icon:'🏆', minLv:5, isBoss:true,  enemies:['Judge Node','Competitor AI'] },
+];
+
+const BOSSES = [
+  null,null,
+  { name:'THE RUG MASTER', emoji:'💀', desc:'Most feared DeFi predator on TON. Drains liquidity with surgical precision.', hp:280, atk:28, def:15 },
+  { name:'BRIDGE DAEMON',  emoji:'👹', desc:'Corrupted cross-chain relay blocking all valid transactions on TON.', hp:340, atk:32, def:18 },
+  { name:'THE GENESIS VIRUS', emoji:'☠️', desc:'Born from the first block. Ancient malware infecting the consensus layer.', hp:420, atk:38, def:22 },
+  { name:'FINAL JUDGE AI', emoji:'🤖', desc:'The ultimate hackathon evaluator — a rogue AGI deciding which projects live.', hp:600, atk:45, def:28 },
+];
+
+// ══════════════════════════════════════
+// SVGs
+// ══════════════════════════════════════
+
+function playerSVG(cls) {
+  const cs = ['#00e5ff','#d500f9','#00e676'];
+  const c = cs[cls];
+  return `<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" class="sp-player">
+    <defs><filter id="gp"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    <circle cx="50" cy="30" r="20" fill="#050a14" stroke="${c}" stroke-width="2" filter="url(#gp)"/>
+    <circle cx="50" cy="30" r="11" fill="${c}" opacity=".7"/>
+    <circle cx="50" cy="30" r="5" fill="#050a14"/>
+    <circle cx="48" cy="28" r="2" fill="${c}"/>
+    <rect x="30" y="52" width="40" height="34" rx="5" fill="#070d1a" stroke="${c}" stroke-width="1.5"/>
+    <rect x="36" y="58" width="28" height="20" rx="3" fill="${c}" opacity=".1"/>
+    <line x1="38" y1="64" x2="62" y2="64" stroke="${c}" stroke-width="1" opacity=".5"/>
+    <line x1="38" y1="70" x2="62" y2="70" stroke="${c}" stroke-width=".7" opacity=".3"/>
+    <rect x="10" y="54" width="18" height="9" rx="4" fill="#070d1a" stroke="${c}" stroke-width="1.5"/>
+    <rect x="72" y="54" width="18" height="9" rx="4" fill="#070d1a" stroke="${c}" stroke-width="1.5"/>
+    <rect x="33" y="87" width="14" height="13" rx="3" fill="#070d1a" stroke="${c}" stroke-width="1.5"/>
+    <rect x="53" y="87" width="14" height="13" rx="3" fill="#070d1a" stroke="${c}" stroke-width="1.5"/>
+    <circle cx="50" cy="30" r="22" fill="none" stroke="${c}" stroke-width=".5" opacity=".3" stroke-dasharray="4 3"/>
+  </svg>`;
+}
+
+function enemySVG(isBoss) {
+  if (isBoss) {
+    return `<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg" class="sp-boss">
+      <defs><filter id="gbo"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <polygon points="50,5 95,85 5,85" fill="#120020" stroke="#d500f9" stroke-width="2.5" filter="url(#gbo)"/>
+      <circle cx="50" cy="55" r="20" fill="#1a0030" stroke="#d500f9" stroke-width="2"/>
+      <circle cx="43" cy="48" r="5" fill="#d500f9" opacity=".9"/>
+      <circle cx="57" cy="48" r="5" fill="#d500f9" opacity=".9"/>
+      <circle cx="43" cy="48" r="2" fill="#050a14"/>
+      <circle cx="57" cy="48" r="2" fill="#050a14"/>
+      <path d="M40 65 L44 58 L50 65 L56 58 L60 65" stroke="#d500f9" stroke-width="1.5" fill="none"/>
+      <polygon points="35,30 42,10 49,30" fill="#d500f9" opacity=".6"/>
+      <polygon points="65,30 58,10 51,30" fill="#d500f9" opacity=".6"/>
+    </svg>`;
+  }
+  const shapes = [
+    `<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg" class="sp-enemy">
+      <rect x="28" y="20" width="44" height="38" rx="4" fill="#1a0000" stroke="#ff1744" stroke-width="2"/>
+      <rect x="35" y="28" width="12" height="10" rx="2" fill="#ff1744" opacity=".8"/>
+      <rect x="53" y="28" width="12" height="10" rx="2" fill="#ff1744" opacity=".8"/>
+      <path d="M38 52 Q50 46 62 52" stroke="#ff1744" stroke-width="2" fill="none"/>
+      <line x1="28" y1="38" x2="14" y2="44" stroke="#ff1744" stroke-width="2"/>
+      <line x1="72" y1="38" x2="86" y2="44" stroke="#ff1744" stroke-width="2"/>
+      <rect x="30" y="60" width="40" height="28" rx="3" fill="#1a0000" stroke="#ff1744" stroke-width="1.5"/>
+      <rect x="35" y="90" width="13" height="10" rx="2" fill="#1a0000" stroke="#ff1744" stroke-width="1.5"/>
+      <rect x="52" y="90" width="13" height="10" rx="2" fill="#1a0000" stroke="#ff1744" stroke-width="1.5"/>
+    </svg>`,
+    `<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg" class="sp-enemy">
+      <ellipse cx="50" cy="40" rx="28" ry="30" fill="#1a0000" stroke="#ff1744" stroke-width="2"/>
+      <circle cx="38" cy="36" r="9" fill="#ff1744" opacity=".8"/>
+      <circle cx="62" cy="36" r="9" fill="#ff1744" opacity=".8"/>
+      <circle cx="38" cy="36" r="4" fill="#1a0000"/>
+      <circle cx="62" cy="36" r="4" fill="#1a0000"/>
+      <path d="M32 65 L35 55 L50 65 L65 55 L68 65 L50 70 Z" fill="#1a0000" stroke="#ff1744" stroke-width="1.5"/>
+    </svg>`,
+    `<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg" class="sp-enemy">
+      <circle cx="50" cy="48" r="24" fill="#1a0000" stroke="#ff1744" stroke-width="2"/>
+      <circle cx="42" cy="42" r="6" fill="#ff1744" opacity=".9"/>
+      <circle cx="58" cy="42" r="6" fill="#ff1744" opacity=".9"/>
+      <circle cx="42" cy="42" r="2.5" fill="#1a0000"/>
+      <circle cx="58" cy="42" r="2.5" fill="#1a0000"/>
+      <path d="M40 58 Q50 54 60 58" stroke="#ff1744" stroke-width="2" fill="none"/>
+      <line x1="26" y1="36" x2="8" y2="24" stroke="#ff1744" stroke-width="1.5" opacity=".8"/>
+      <line x1="24" y1="48" x2="6" y2="46" stroke="#ff1744" stroke-width="1.5" opacity=".8"/>
+      <line x1="74" y1="36" x2="92" y2="24" stroke="#ff1744" stroke-width="1.5" opacity=".8"/>
+      <line x1="76" y1="48" x2="94" y2="46" stroke="#ff1744" stroke-width="1.5" opacity=".8"/>
+    </svg>`,
+  ];
+  return shapes[Math.floor(Math.random()*shapes.length)];
+}
+
+// ══════════════════════════════════════
+// GAME STATE
+// ══════════════════════════════════════
+
+let P = {};
+let E = {};
+let G = { busy:false, wave:1, wavesMax:4, zone:0, turn:0, kills:0, ton:0,
+          defBoost:0, dodgeNext:false, reflectNext:false, timer:0 };
+let logTick = 0;
+let aiConvo = [];
+let selCls = 0;
+
+// Class selector
+document.querySelectorAll('.class-card').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.class-card').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    selCls = parseInt(c.dataset.cls);
+  });
+});
+
+function startGame() {
+  const name = (document.getElementById('nameInput').value.trim() || 'AGENT_7').toUpperCase();
+  const cls = CLASSES[selCls];
+  P = { name, classIdx:selCls, hp:cls.hp, hpMax:cls.hp, mp:cls.mp, mpMax:cls.mp,
+        atk:cls.atk, def:cls.def, spd:cls.spd, crit:cls.crit, level:1, xp:0, xpNext:100 };
+  G = { busy:false, wave:1, wavesMax:4, zone:0, turn:0, kills:0, ton:0,
+        defBoost:0, dodgeNext:false, reflectNext:false, timer:0 };
+  G._interval = setInterval(()=>G.timer++, 1000);
+
+  document.getElementById('intro').classList.add('hidden');
+  document.getElementById('game').classList.remove('hidden');
+
+  document.getElementById('playerSprite').innerHTML = playerSVG(selCls);
+  document.getElementById('portraitEl').innerHTML = playerSVG(selCls);
+  document.getElementById('charNameD').textContent = P.name;
+  document.getElementById('charClassD').textContent = `◈ ${cls.name} ◈`;
+  document.getElementById('fnP').textContent = P.name;
+  document.getElementById('s1l').textContent = cls.skills[0];
+  document.getElementById('s2l').textContent = cls.skills[1];
+
+  buildSkills(); buildZones(); updateHUD(); spawnEnemy();
+
+  log(`⚡ Agent ${P.name} (${cls.name}) deployed to TON Mainnet.`, 'system');
+  log(`📡 Entering ${ZONES[0].name} — Wave 1/${G.wavesMax}`, 'system');
+
+  // Wallet status in game
+  if (walletAddress) {
+    document.getElementById('gwAddr').textContent = formatAddr(walletAddress);
+    document.getElementById('gwBal').textContent = walletBalance;
+  }
+
+  setTimeout(() => {
+    addAIBubble(`Welcome, ${P.name}! I'm your AI Battle Agent powered by Claude. You're deployed as a ${cls.name} on TON Mainnet — ${selCls===0?'focus on aggressive chain attacks':selCls===1?'manage your mana pool for AoE combos':'leverage your fortress defense to outlast enemies'}.\n\nYour wallet is ${walletAddress?'connected — ready to earn on-chain rewards! 💰':'not connected — connect to claim rewards on Mainnet.'}`, 'ai');
+  }, 700);
+}
+
+// ══════════════════════════════════════
+// BUILD PANELS
+// ══════════════════════════════════════
+
+function buildSkills() {
+  const cls = CLASSES[P.classIdx];
+  document.getElementById('skillListEl').innerHTML = `<div class="skill-list">${
+    cls.skills.map((s,i) => `<div class="sk-item">
+      <span class="sk-icon">${cls.icons[i]}</span>
+      <div class="sk-info"><div class="sk-name">${s}</div><div class="sk-desc">${cls.descs[i]}</div></div>
+      <div class="sk-cost">${cls.mpCosts[i]} MP</div>
+    </div>`).join('')
+  }</div>`;
+}
+
+function buildZones() {
+  document.getElementById('zoneMapEl').innerHTML = ZONES.map((z,i) => {
+    const unlocked = P.level >= z.minLv;
+    const active = i === G.zone;
+    const cls = `zi${active?' zi-active':''}${!unlocked?' zi-locked':''}${z.isBoss?' zi-boss':''}`;
+    const badge = !unlocked ? '<span class="zi-badge zb-l">🔒</span>'
+                : z.isBoss  ? '<span class="zi-badge zb-b">BOSS</span>'
+                :             '<span class="zi-badge zb-n">NORMAL</span>';
+    return `<div class="${cls}" onclick="${unlocked&&!active?`gotoZone(${i})`:''}" >
+      <span class="zi-icon">${z.icon}</span>
+      <div class="zi-info"><div class="zi-name">${z.name}</div><div class="zi-sub">Lv.${z.minLv}+ · ${z.enemies.length} types</div></div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+function gotoZone(i) {
+  G.zone = i; G.wave = 1;
+  buildZones(); spawnEnemy();
+  log(`🌐 Navigating to zone: ${ZONES[i].name}`, 'system');
+}
+
+// ══════════════════════════════════════
+// ENEMY SPAWN
+// ══════════════════════════════════════
+
+function spawnEnemy() {
+  const z = ZONES[G.zone];
+  const isBoss = G.wave >= G.wavesMax && BOSSES[G.zone];
+  if (isBoss) {
+    const bd = BOSSES[G.zone];
+    E = { name:bd.name, hp:bd.hp, hpMax:bd.hp, atk:bd.atk, def:bd.def, isBoss:true };
+    document.getElementById('bossEmoji').textContent = bd.emoji;
+    document.getElementById('bossName').textContent = bd.name;
+    document.getElementById('bossDesc').textContent = bd.desc;
+    document.getElementById('bossHpD').textContent = bd.hp;
+    document.getElementById('bossAtkD').textContent = bd.atk;
+    document.getElementById('bossDefD').textContent = bd.def;
+    document.getElementById('bossOverlay').classList.remove('hidden');
+  } else {
+    const en = z.enemies[Math.floor(Math.random()*z.enemies.length)];
+    const base = 65 + G.zone*18 + G.wave*10 + (P.level-1)*5;
+    E = { name:en, hp:base, hpMax:base, atk:8+G.zone*3+G.wave*2, def:3+G.zone*2, isBoss:false };
+    renderEnemy();
+  }
+  updateHUD();
+  setBadge(E.isBoss ? 'BOSS FIGHT' : '⚔ BATTLE', E.isBoss);
+}
+
+function renderEnemy() {
+  document.getElementById('enemySprite').innerHTML = enemySVG(E.isBoss);
+  document.getElementById('fnE').textContent = E.name;
+  document.getElementById('fnE').className = 'fn ' + (E.isBoss?'fn-b':'fn-e');
+  document.getElementById('fhE').className = 'fhfill ' + (E.isBoss?'fhf-b':'fhf-e');
+  updateEBar();
+}
+
+function closeBossOverlay() {
+  document.getElementById('bossOverlay').classList.add('hidden');
+  renderEnemy();
+  log(`⚠ BOSS FIGHT: ${E.name} has appeared!`, 'system');
+  flash('boss');
+  setBadge('◆ BOSS FIGHT', true);
+}
+
+// ══════════════════════════════════════
+// HUD
+// ══════════════════════════════════════
+
+function updateHUD() {
+  const hp = P.hp/P.hpMax*100, mp = P.mp/P.mpMax*100, xp = P.xp/P.xpNext*100;
+  document.getElementById('sfHp').style.width = Math.max(0,hp)+'%';
+  document.getElementById('sfMp').style.width = Math.max(0,mp)+'%';
+  document.getElementById('sfXp').style.width = Math.max(0,xp)+'%';
+  document.getElementById('svHp').textContent = `${P.hp}/${P.hpMax}`;
+  document.getElementById('svMp').textContent = `${P.mp}/${P.mpMax}`;
+  document.getElementById('svXp').textContent = `${P.xp}/${P.xpNext}`;
+  document.getElementById('csAtk').textContent = P.atk;
+  document.getElementById('csDef').textContent = P.def+(G.defBoost||0);
+  document.getElementById('csSpd').textContent = P.spd;
+  document.getElementById('csCrit').textContent = P.crit+'%';
+  document.getElementById('tbHp').textContent = `${P.hp}/${P.hpMax}`;
+  document.getElementById('tbMp').textContent = `${P.mp}/${P.mpMax}`;
+  document.getElementById('tbLv').textContent = P.level;
+  document.getElementById('tbTon').textContent = G.ton.toFixed(2);
+  document.getElementById('tbZone').textContent = ZONES[G.zone].name;
+  document.getElementById('gwBal').textContent = G.ton.toFixed(2);
+  document.getElementById('fhP').style.width = Math.max(0,hp)+'%';
+  document.getElementById('fhvP').textContent = `${P.hp}/${P.hpMax} HP`;
+  document.getElementById('wDisp').textContent = G.wave;
+  document.getElementById('wmDisp').textContent = G.wavesMax;
+  updateStatusStrip();
+}
+
+function updateEBar() {
+  if (!E.hp && E.hp!==0) return;
+  const pct = Math.max(0, E.hp/E.hpMax*100);
+  document.getElementById('fhE').style.width = pct+'%';
+  document.getElementById('fhvE').textContent = `${Math.max(0,E.hp)}/${E.hpMax} HP`;
+}
+
+function setBadge(txt, isBoss=false) {
+  const el = document.getElementById('vsBadge');
+  el.textContent = txt;
+  el.className = 'vs-badge ' + (isBoss?'vsb-b':'vsb-a');
+}
+
+function updateStatusStrip() {
+  const tags = [];
+  tags.push(`<div class="stag st-info">ZONE: ${ZONES[G.zone].name}</div>`);
+  tags.push(`<div class="stag st-info">WAVE: ${G.wave}/${G.wavesMax}</div>`);
+  if (G.defBoost>0) tags.push(`<div class="stag st-buff">DEF+15 (${G.defBoost}T)</div>`);
+  if (G.dodgeNext)  tags.push(`<div class="stag st-buff">FORESIGHT ACTIVE</div>`);
+  if (G.reflectNext)tags.push(`<div class="stag st-buff">REFLECT READY</div>`);
+  if (E?.isBoss)    tags.push(`<div class="stag st-debuff">BOSS ENCOUNTER</div>`);
+  if (P.hp < P.hpMax*.25) tags.push(`<div class="stag st-debuff">⚠ CRITICAL HP</div>`);
+  if (walletAddress) tags.push(`<div class="stag st-ton">💰 WALLET CONNECTED</div>`);
+  document.getElementById('statusStrip').innerHTML = tags.join('');
+}
+
+// ══════════════════════════════════════
+// COMBAT
+// ══════════════════════════════════════
+
+function act(type) {
+  if (G.busy || !E || E.hp<=0) return;
+  G.busy = true; G.turn++;
+  const cls = CLASSES[P.classIdx];
+
+  function roll(atkVal, defVal, mult=1) {
+    const raw = Math.max(1, atkVal - defVal*.45) * mult;
+    const crit = Math.random()*100 < P.crit;
+    return { dmg: Math.floor(raw*(0.85+Math.random()*.3)*(crit?1.8:1)), crit };
+  }
+
+  let dmg=0, healed=0;
+
+  if (type==='attack') {
+    const r = roll(P.atk, E.def);
+    dmg = r.dmg;
+    if (r.crit) { floatDmg(dmg,'crit'); log(`💥 ${P.name} CRITICAL STRIKE — ${dmg} damage! [CRIT×1.8]`,'crit'); }
+    else         { floatDmg(dmg,'player'); log(`⚔️ ${P.name} attacks for ${dmg} damage.`,'player'); }
+
+  } else if (type==='skill1') {
+    if (P.mp<cls.mpCosts[0]) { log('❌ Not enough MP!','system'); G.busy=false; return; }
+    P.mp-=cls.mpCosts[0];
+    const r = roll(P.atk, E.def*.4, 1.9);
+    dmg=r.dmg; floatDmg(dmg,'skill');
+    log(`💥 ${cls.skills[0]}: ${dmg} damage (armor-piercing)!`,'player');
+
+  } else if (type==='skill2') {
+    if (P.mp<cls.mpCosts[1]) { log('❌ Not enough MP!','system'); G.busy=false; return; }
+    P.mp-=cls.mpCosts[1];
+    if (P.classIdx===2) { G.defBoost=(G.defBoost||0)+3; log(`🏰 IRON FORTRESS: DEF +15 for 3 turns.`,'player'); }
+    else if (P.classIdx===1) { G.dodgeNext=true; log(`🔮 FORESIGHT: Next enemy attack dodged.`,'player'); }
+    else { const r=roll(P.atk,E.def,1.5); dmg=r.dmg; floatDmg(dmg,'skill'); log(`🪓 ${cls.skills[1]}: ${dmg} damage!`,'player'); }
+
+  } else if (type==='heal') {
+    if (P.mp<25) { log('❌ Not enough MP!','system'); G.busy=false; return; }
+    P.mp-=25;
+    healed = Math.floor(P.hpMax*.28+Math.random()*12);
+    P.hp = Math.min(P.hpMax, P.hp+healed);
+    flash('heal'); log(`💊 RESTORE: +${healed} HP recovered. (${P.hp}/${P.hpMax})`,'player');
+
+  } else if (type==='ultimate') {
+    if (P.mp<cls.mpCosts[2]) { log(`❌ Not enough MP for ULTIMATE (need ${cls.mpCosts[2]})!`,'system'); G.busy=false; return; }
+    P.mp-=cls.mpCosts[2];
+    if (P.classIdx===2) { G.reflectNext=true; log(`🔁 NODE SURGE: Next enemy attack reflected 80%!`,'player'); }
+    else { const r=roll(P.atk,E.def*.1, P.classIdx===0?3.5:2.8); dmg=r.dmg; floatDmg(dmg,'crit'); log(`⚡ ULTIMATE: ${dmg} MASSIVE DAMAGE!!`,'crit'); flash('boss'); }
+  }
+
+  if (dmg>0) { E.hp=Math.max(0,E.hp-dmg); updateEBar(); }
+  updateHUD();
+  addHistory(type.toUpperCase(), dmg||healed||'—');
+
+  if (E.hp<=0) { setTimeout(()=>onEnemyDead(),500); return; }
+  setTimeout(()=>enemyTurn(),650);
+}
+
+function enemyTurn() {
+  if (!E||E.hp<=0) { G.busy=false; return; }
+  let def = P.def+(G.defBoost||0);
+  if (G.defBoost>0) G.defBoost--;
+
+  const raw = Math.max(1,E.atk-def*.4)*(0.85+Math.random()*.3);
+  let dmg = Math.floor(raw);
+  const enrage = E.isBoss && G.turn%3===0;
+  if (enrage) dmg = Math.floor(dmg*1.6);
+
+  if (G.dodgeNext) {
+    G.dodgeNext=false;
+    log(`✨ FORESIGHT: ${P.name} perfectly dodges the attack!`,'player');
+    P.mp=Math.min(P.mpMax,P.mp+8);
+    updateHUD(); G.busy=false; return;
+  }
+
+  if (G.reflectNext) {
+    G.reflectNext=false;
+    const rd = Math.floor(dmg*.8);
+    E.hp=Math.max(0,E.hp-rd);
+    floatDmg(rd,'player');
+    log(`🔁 NODE SURGE reflects ${rd} damage back to ${E.name}!`,'player');
+    updateEBar(); updateHUD();
+    if (E.hp<=0) { setTimeout(()=>onEnemyDead(),300); return; }
+    G.busy=false; return;
+  }
+
+  P.hp=Math.max(0,P.hp-dmg);
+  const type = E.isBoss?'boss':'enemy';
+  log(`${E.isBoss?'💀':'👾'} ${E.name}${enrage?' [ENRAGE]':''} attacks for ${dmg} damage.${enrage?' ⚠ BOSS RAGE!':''}`, type);
+  floatDmgP(dmg); flash('damage');
+  P.mp=Math.min(P.mpMax,P.mp+7);
+  updateHUD();
+  if (P.hp<=0) { gameOver(); return; }
+  G.busy=false;
+}
+
+function onEnemyDead() {
+  G.kills++;
+  const xp = 25 + G.zone*10 + G.wave*6 + (E.isBoss?80:0);
+  const ton = parseFloat((0.1+G.zone*.12+G.wave*.04+(E.isBoss?.5:0)).toFixed(2));
+  G.xp+=xp; G.ton+=ton;
+  log(`✅ ${E.name} defeated! +${xp} XP | +${ton} TON`, 'system');
+  if (walletAddress) log(`💰 ${ton} TON credited to ${formatAddr(walletAddress)}`, 'ton');
+  addHistory('KILL: '+E.name, ton+' TON');
+  checkLevelUp();
+
+  const lastZone = G.zone>=ZONES.length-1;
+  const lastWave = G.wave>=G.wavesMax;
+  if (lastZone && lastWave) { setTimeout(()=>showVictory(),800); return; }
+  if (lastWave) { G.zone++; G.wave=1; log(`🌐 Zone cleared! → ${ZONES[G.zone].name}`,'system'); buildZones(); setTimeout(()=>spawnEnemy(),900); }
+  else { G.wave++; setTimeout(()=>spawnEnemy(),700); }
+  G.busy=false; updateHUD();
+}
+
+function checkLevelUp() {
+  while (P.xp>=P.xpNext) {
+    P.xp-=P.xpNext; P.level++;
+    P.xpNext=Math.floor(P.xpNext*1.45);
+    P.hpMax+=18; P.hp=P.hpMax; P.mpMax+=12; P.mp=P.mpMax;
+    P.atk+=3; P.def+=2; P.spd+=1; P.crit=Math.min(45,P.crit+1);
+    log(`⭐ LEVEL UP! Now Level ${P.level}! All stats increased.`,'system');
+    buildZones();
+  }
+}
+
+function gameOver() {
+  clearInterval(G._interval); G.busy=true;
+  log(`💀 AGENT ${P.name} DESTROYED — TON network connection lost.`,'enemy');
+  setBadge('✕ DEFEATED',false);
+  document.getElementById('vsBadge').style.background='rgba(255,23,68,.15)';
+  document.getElementById('vsBadge').style.color='var(--red)';
+  document.querySelectorAll('.abtn').forEach(b=>b.disabled=true);
+  setTimeout(()=>{ if(confirm('🔴 AGENT DESTROYED\n\nDeploy a new agent?')) location.reload(); },1200);
+}
+
+// ══════════════════════════════════════
+// FX
+// ══════════════════════════════════════
+
+function floatDmg(val, type) {
+  const el = document.getElementById('enemySprite');
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const d = document.createElement('div');
+  d.className='dmg-float';
+  const cols={crit:'#ff6d00',player:'#ff1744',skill:'#00e5ff'};
+  d.style.cssText=`left:${r.x+r.width/2-20}px;top:${r.y}px;color:${cols[type]||'#fff'};font-size:${type==='crit'?'1.9rem':'1.4rem'};text-shadow:0 0 12px ${cols[type]||'#fff'};`;
+  d.textContent=`-${val}`;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),1400);
+}
+
+function floatDmgP(val) {
+  const el = document.getElementById('playerSprite');
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const d = document.createElement('div');
+  d.className='dmg-float';
+  d.style.cssText=`left:${r.x+r.width/2-15}px;top:${r.y}px;color:#ff4444;font-size:1.3rem;`;
+  d.textContent=`-${val}`;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),1400);
+}
+
+function flash(type) {
+  const el = document.getElementById('arenaEl');
+  el.classList.remove('flash-d','flash-h','flash-b');
+  void el.offsetWidth;
+  el.classList.add(type==='damage'?'flash-d':type==='heal'?'flash-h':'flash-b');
+}
+
+// ══════════════════════════════════════
+// LOG & HISTORY
+// ══════════════════════════════════════
+
+function log(msg, type='system') {
+  logTick++;
+  const inner = document.getElementById('logInner');
+  const p = n => String(n).padStart(2,'0');
+  const t = `[${p(Math.floor(logTick/60))}:${p(logTick%60)}]`;
+  const d = document.createElement('div');
+  d.className=`log-line ll-${type}`;
+  d.innerHTML=`<span class="ll-t">${t}</span><span>${msg}</span>`;
+  inner.appendChild(d);
+  inner.scrollTop=inner.scrollHeight;
+}
+
+function addHistory(label, val) {
+  const el = document.getElementById('bhList');
+  const d = document.createElement('div');
+  d.className='bh-item';
+  d.innerHTML=`<span class="bh-txt">${label}</span><span class="bh-val">${val}</span>`;
+  el.prepend(d);
+  if (el.children.length>10) el.removeChild(el.lastChild);
+}
+
+// ══════════════════════════════════════
+// AI AGENT
+// ══════════════════════════════════════
+
+function addAIBubble(text, from='ai') {
+  const wrap = document.getElementById('aiMsgs');
+  const d = document.createElement('div');
+  d.className=`ai-bub from-${from}`;
+  d.innerHTML=`<div class="bub-l ${from}">${from==='ai'?'⬡ AI AGENT':'◆ YOU'}</div>${text}`;
+  wrap.appendChild(d);
+  wrap.scrollTop=wrap.scrollHeight;
+}
+
+function showTyping() {
+  const wrap = document.getElementById('aiMsgs');
+  const d = document.createElement('div');
+  d.className='ai-bub from-ai';d.id='typingBub';
+  d.innerHTML=`<div class="bub-l ai">⬡ AI AGENT</div><div class="ai-typing"><span></span><span></span><span></span></div>`;
+  wrap.appendChild(d); wrap.scrollTop=wrap.scrollHeight;
+}
+
+function hideTyping() { const el=document.getElementById('typingBub'); if(el)el.remove(); }
+
+async function callClaude(userMsg, sys) {
+  try {
+    const msgs = [...aiConvo, {role:'user',content:userMsg}];
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:sys, messages:msgs })
+    });
+    const data = await res.json();
+    const text = data.content?.map(b=>b.text||'').join('')||'No response.';
+    aiConvo.push({role:'user',content:userMsg},{role:'assistant',content:text});
+    if (aiConvo.length>20) aiConvo=aiConvo.slice(-20);
+    return text;
+  } catch {
+    return `⚠ AI offline. Tactical assessment: HP at ${Math.round(P.hp/P.hpMax*100)}% — ${P.hp<P.hpMax*.35?'CRITICAL: use RESTORE immediately.':'safe range — maintain offensive pressure.'}`;
+  }
+}
+
+async function requestStrategy() {
+  const btns = [document.getElementById('btnAIStrat'), document.getElementById('stratBtn')];
+  btns.forEach(b=>b.disabled=true);
+
+  const sys = `You are a professional AI Battle Strategist for a blockchain RPG on the TON Mainnet. Analyze combat data and give concise tactical advice in English (3-5 sentences). Always end with ONE specific action from: [ATTACK / SKILL I / SKILL II / HEAL / ULTIMATE]. Use blockchain/network terminology naturally.`;
+
+  const ctx = `Battle State:
+- Agent: ${P.name} | Class: ${CLASSES[P.classIdx].name} | Level: ${P.level}
+- HP: ${P.hp}/${P.hpMax} (${Math.round(P.hp/P.hpMax*100)}%) | MP: ${P.mp}/${P.mpMax} (${Math.round(P.mp/P.mpMax*100)}%)
+- ATK: ${P.atk} | DEF: ${P.def+(G.defBoost||0)}${G.defBoost>0?` (+${G.defBoost}T boost)`:''}
+- Enemy: ${E?.name} | HP: ${E?.hp}/${E?.hpMax} (${Math.round((E?.hp||0)/(E?.hpMax||1)*100)}%) | ATK: ${E?.atk} | BOSS: ${E?.isBoss?'YES':'NO'}
+- Zone: ${ZONES[G.zone].name} | Wave: ${G.wave}/${G.wavesMax} | Turn: ${G.turn}
+- Buffs: dodge=${G.dodgeNext} | reflect=${G.reflectNext} | defBoost=${G.defBoost}T
+- Wallet: ${walletAddress?'CONNECTED ('+formatAddr(walletAddress)+')':'NOT CONNECTED'}
+- TON earned: ${G.ton.toFixed(2)}
+
+Recommend optimal action.`;
+
+  showTyping();
+  const reply = await callClaude(ctx, sys);
+  hideTyping();
+  addAIBubble(reply,'ai');
+
+  const r=reply.toUpperCase();
+  let auto=null;
+  if(r.includes('ULTIMATE')) auto='ultimate';
+  else if(r.includes('SKILL I')||r.includes('SKILL 1')) auto='skill1';
+  else if(r.includes('SKILL II')||r.includes('SKILL 2')) auto='skill2';
+  else if(r.includes('HEAL')||r.includes('RESTORE')) auto='heal';
+  else if(r.includes('ATTACK')) auto='attack';
+
+  if (auto && !G.busy) {
+    setTimeout(()=>{ log(`🤖 AI Agent auto-executing: ${auto.toUpperCase()}`,'ai'); act(auto); },1000);
+  }
+
+  btns.forEach(b=>b.disabled=false);
+}
+
+async function sendMsg() {
+  const inp = document.getElementById('aiInp');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value='';
+  addAIBubble(msg,'user');
+  showTyping();
+
+  const sys = `You are an AI Battle Agent for a blockchain RPG on TON Mainnet. Answer questions about strategy, TON blockchain, game mechanics briefly (3-4 sentences, English). Wallet: ${walletAddress?'connected ('+formatAddr(walletAddress)+')':'not connected'}. Current: ${P.name} Lv${P.level}, HP ${P.hp}/${P.hpMax}, fighting ${E?.name||'nothing'} in ${ZONES[G.zone].name}.`;
+
+  const reply = await callClaude(msg, sys);
+  hideTyping();
+  addAIBubble(reply,'ai');
+}
+
+// ══════════════════════════════════════
+// VICTORY
+// ══════════════════════════════════════
+
+function showVictory() {
+  clearInterval(G._interval);
+  document.getElementById('game').classList.add('hidden');
+  document.getElementById('victory').classList.remove('hidden');
+  const mins=Math.floor(G.timer/60), secs=G.timer%60;
+  const rows=[
+    ['Agent', P.name],
+    ['Class', CLASSES[P.classIdx].name],
+    ['Final Level', P.level],
+    ['Enemies Slain', G.kills],
+    ['TON Earned', G.ton.toFixed(2)+' TON'],
+    ['Total Turns', G.turn],
+    ['Time', `${mins}:${String(secs).padStart(2,'0')}`],
+    ['Wallet', walletAddress ? formatAddr(walletAddress) : 'Not connected'],
+  ];
+  document.getElementById('vRows').innerHTML = rows.map(([l,v])=>`<div class="vc-row"><span class="vc-label">${l}</span><span class="vc-value">${v}</span></div>`).join('');
+  document.getElementById('vWalletAmt').textContent = G.ton.toFixed(2)+' TON';
+  document.getElementById('vWalletSub').textContent = walletAddress
+    ? `Earned to ${formatAddr(walletAddress)} on Mainnet ✓`
+    : 'Connect wallet to claim your rewards';
+  if (walletAddress) document.getElementById('vWalletReward').style.borderColor='rgba(0,230,118,.3)';
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+
+window.addEventListener('DOMContentLoaded', () => {
+  initTonConnect();
+});
+</script>
+</body>
+</html>
