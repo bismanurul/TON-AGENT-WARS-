@@ -5,7 +5,7 @@
 ![TON Agent Wars](https://img.shields.io/badge/TON-Mainnet-0088cc?style=for-the-badge&logo=telegram)
 ![License](https://img.shields.io/badge/License-MIT-ffb300?style=for-the-badge)
 
----
+TON address claim reward hackaton = UQA82xd8FoBc0aTHfNvm0UZbZfyWPxdX4ibBLd8KmNwaTnRM
 
 ## 🎮 Overview
 
