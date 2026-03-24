@@ -3,7 +3,6 @@
 > **Hackathon Submission** · TON Ecosystem · User-Facing AI Agents + Agent Infrastructure Tracks · $10,000 Prize Pool
 
 ![TON Agent Wars](https://img.shields.io/badge/TON-Mainnet-0088cc?style=for-the-badge&logo=telegram)
-![AI Powered](https://img.shields.io/badge/AI-Claude%20Sonnet-00e676?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-ffb300?style=for-the-badge)
 
 ---
